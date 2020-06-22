@@ -1,0 +1,93 @@
+---
+title: "Actividad01"
+output: html_document
+---
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+
+
+#SEGUNDA ACTIVIDAD
+
+En esta parte utilizaremos el dataset de 'nycflights13' la cual contiene datos de una aerolínea para todos los vuelos que salieron de Nueva York en 2013. También incluye informacion útil sobre aerolíneas, aeropuertos, clima y aviones.
+
+```{r, message=FALSE, warning=FALSE}
+library(nycflights13)
+```
+
+```{r, message=FALSE, warning=FALSE}
+daily <- flights %>%
+  group_by(dest,day) %>%
+  summarize(count = n())
+daily
+```
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(daily, aes(x=day, y=count, color= dest, shape=dest))+
+  geom_point(aes(color=dest), size= 1, alpha= 0.3 )+
+  scale_y_continuous(trans='log2')+
+  scale_shape_manual(values = rep(0:15, 15))+
+  ylim(0,600)+
+  xlab("day") + ylab("number of flights")+
+  theme_bw()+
+  theme(legend.text=element_text(size=6))
+
+
+```
+
+
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(daily, aes(x=day, y=count, color= dest, group=dest))+
+  geom_line()+
+  scale_y_continuous(trans='log2')+
+  ylim(0,600)+
+  xlab("day") + ylab("number of flights")+
+  theme_bw()+
+  theme(legend.text=element_text(size=6))
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+
+library(plyr)
+a <- ddply(daily,.(dest),function(x) x[sample(nrow(x),1),])
+
+ggplot(daily, aes(x=day, y=count, color= dest, group=dest))+
+  geom_point(aes(color=dest), size= 1, alpha= 0.3 )+
+  geom_line(aes(color=dest), alpha=0.4)+
+  scale_y_continuous(trans='log2')+
+  scale_shape_manual(values = rep(0:6, 16))+
+  theme_bw()+
+  theme(legend.text=element_text(size=6))+
+  geom_text(aes(day, count, label = dest), data = a, size=2, colour="black")
+
+```
+
+
+###Gapminder 
+
+```{r, message=FALSE, warning=FALSE}
+library(gapminder)
+gap_2007 <- gapminder %>%
+  filter(year==2007)
+
+countries <- gap_2007 %>%
+            subset(pop>=223547000 )  %>%
+            select(country)
+
+
+gap_plot <- ggplot(gap_2007, aes(x = gdpPercap, y = lifeExp, color = continent, size = pop)) +
+  geom_point(alpha=0.8) + scale_x_log10() + scale_size(range = c(.1, 20), name="Population")
+
+gap_plot + labs(x = 'GDP per Capita [in USD]', y = 'Life Expectancy [in years]', title = "World Development in 2007") + 
+theme(legend.position = "none")+
+  geom_text(aes(gdpPercap, lifeExp, label = country), data = gap_2007[gap_2007$country %in% countries$country, ], size=3, colour="black")
+
+
+  
+```
+

@@ -1,0 +1,198 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+#PRIMERA ACTIVIDAD
+
+##MGP
+
+Para esta parte, utilizaremos el dataset de 'mpg'. 
+Este contiene datos de economía de combustible de 1999 a 2008 para 38 modelos populares de automóviles
+
+```{r, message=FALSE, warning = FALSE}
+library(tidyverse)
+library(ggplot2)
+mpg
+```
+
+```{r, message=FALSE, warning = FALSE}
+str(mpg)
+```
+
+
+```{r, message=FALSE, warning = FALSE}
+qplot(displ, hwy, data = mpg) #data: dónde están las variables que quiero gráficar, mpg
+
+
+p <- ggplot(mpg, aes(x=displ, y=hwy)) + 
+  geom_point()
+p
+```
+
+```{r, message=FALSE, warning = FALSE}
+qplot(displ, hwy, data = mpg, shape =drv)
+
+p <- ggplot(mpg, aes(x=displ, y=hwy)) + 
+  geom_point(aes(shape = drv))
+p
+```
+
+```{r, message=FALSE, warning = FALSE}
+qplot(displ, hwy, data = mpg, color =drv)#Qplot es más rápida, exploración rápida de los datos.
+
+
+p <- ggplot(mpg, aes(x=displ, y=hwy)) + 
+  geom_point(aes(color = drv))
+p
+```
+```{r, message=FALSE, warning = FALSE}
+qplot(displ, hwy, data = mpg, color =drv, shape = drv)
+
+
+p <- ggplot(mpg, aes(x=displ, y=hwy)) + 
+  geom_point(aes(shape = drv, color=drv))
+p
+```
+```{r, message=FALSE, warning = FALSE}
+qplot(displ, hwy, data = mpg,geom=c("point","smooth"))
+
+
+p <- ggplot(mpg, aes(x=displ, y=hwy)) + 
+  geom_point()+
+  geom_smooth()
+
+p
+```
+
+```{r, message=FALSE, warning = FALSE}
+qplot(displ, hwy, data = mpg,color = drv, geom=c("point","smooth"))
+
+
+p <- ggplot(mpg, aes(x=displ, y=hwy)) + 
+  geom_point(aes(color = drv))+
+  geom_smooth(aes(group=drv))
+p
+```
+
+
+
+
+```{r, message=FALSE, warning = FALSE}
+qplot(hwy, data = mpg, fill= drv, binwidth = 2)
+
+p <- ggplot(data=mpg, aes(mpg$hwy)) + 
+  geom_histogram(aes(fill = drv))
+p
+
+```
+
+```{r, message=FALSE, warning = FALSE}
+qplot(drv, hwy, data = mpg, geom = "boxplot")
+
+
+p <- ggplot(data=mpg, aes(drv, hwy)) + 
+  geom_boxplot()
+p
+
+```
+
+
+
+```{r, message=FALSE, warning = FALSE}
+qplot(hwy, data=mpg, facets=drv~., binwidth = 2)
+
+
+p = ggplot(mpg, aes(x=hwy)) +
+    geom_histogram(binwidth=2) +
+    facet_grid(drv~.)
+p
+```
+
+
+```{r, message=FALSE, warning = FALSE}
+qplot(hwy, data=mpg, facets = .~ drv, binwidth = 2, fill = drv)
+
+
+
+p = ggplot(mpg, aes(x=hwy, fill=drv)) +
+    geom_histogram(binwidth=2) +
+    facet_grid(.~drv)
+p
+```
+
+
+
+##MAACS dataset
+
+Utilizando la base de datos 'Mouse Allergen and Asthma Cohort Study (MAACS)' buscaremos responder a la pregunta: 
+"¿Las personas con sobrepeso, según lo medido por el índice de masa corporal (IMC), son más susceptibles que las personas de peso normal a los efectos nocivos de PM2.5 en los síntomas del asma?"
+Para más información consultar la página web: *https://laqm.defra.gov.uk/public-health/pm25.html*
+
+
+```{r, message=FALSE, warning = FALSE}
+maacs <- read.csv("bmi_pm25_no2_sim.csv")
+str(maacs)
+maacs
+```
+
+
+```{r, message=FALSE, warning = FALSE}
+p <- ggplot(maacs, aes(logpm25, NocturnalSympt))
+summary(p)
+```
+
+```{r, message=FALSE, warning = FALSE}
+g <- ggplot(maacs, aes(logpm25, NocturnalSympt))
+g + geom_point()+
+  geom_smooth(method = "lm")
+```
+
+
+Facetas! porque nuestra pregunta principal implica comparar individuos con sobrepeso contra individuos con peso normal
+
+```{r, message=FALSE, warning = FALSE}
+g + geom_point() +
+        geom_smooth(method = "lm") +
+        facet_grid(. ~ bmicat)
+```
+
+```{r, message=FALSE, warning = FALSE}
+g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
+
+g + geom_point(aes(color = bmicat), size = 4, alpha = 1/2)
+```
+
+```{r, message=FALSE, warning = FALSE}
+g + geom_point(aes(color = bmicat)) +
+        labs(title = "MAACS Cohort") +
+        labs(x = expression("log " * PM[2.5]), y = "Nocturnal Symptoms")
+```
+
+```{r, message=FALSE, warning = FALSE}
+g + geom_point(aes(color = bmicat)) + theme_bw(base_family = "Times")
+```
+
+```{r, message=FALSE, warning=FALSE}
+testdat <- data.frame(x = 1:100, y = rnorm(100))
+testdat[50,2] <- 100  ## Outlier!
+g <- ggplot(testdat, aes(x = x, y = y))
+g + geom_line()
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+g + geom_line() + ylim(-3,3)
+
+p <- g+geom_line() + coord_cartesian(ylim=c(-3,3))
+p
+```
+
+```{r, message=FALSE, warning=FALSE}
+p + annotate("text", x = c(45,55), y = c(2,2), label = c("here1", "here2"),
+             color = c("red", "blue"))
+```
+
+
