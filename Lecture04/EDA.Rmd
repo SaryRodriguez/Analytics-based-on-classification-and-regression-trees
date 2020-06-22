@@ -1,0 +1,161 @@
+---
+title: "EDA"
+output: html_document
+author: "Sara Rodriguez"
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE)
+
+```
+
+
+
+#Exploratory Data Analysis (EDA)
+
+```{r}
+library(moderndive) #precios de casas en Seattle
+library(tidyverse)
+library(patchwork)
+```
+
+
+```{r}
+head(house_prices)
+```
+
+```{r}
+p1 <- ggplot(house_prices, aes(x=price))+ geom_histogram(binwidth = 200000, color="white", fill="orange") + labs(x="price", y="price (USD)", title="House Prices")
+p1
+
+
+#qué tan grande es la casa
+p2 <- ggplot(house_prices, aes(x=sqft_living))+ geom_histogram(binwidth = 200, color="orange") + labs(x="price", y="Living Space (square feet)", title="House Size")
+p2
+```
+
+
+
+```{r}
+p3 <- ggplot(house_prices, aes(x=condition))+
+  geom_bar(aes(fill=condition))+ labs(x="condition", title="House Condition")+
+  theme(legend.position = "None")
+p3
+```
+
+
+
+```{r}
+p1/(p2+p3)
+```
+
+#Ejercicio: Tranformar a pesos y metros cuadrados
+
+```{r}
+p1new <- ggplot(house_prices, aes(x = price*21)) +
+  geom_histogram(binwidth = 4000000, fill = 'black', color = 'white') +
+  labs (x = 'price(MXN)', title = ' House price')
+ 
+p2new <- ggplot(house_prices, aes(x = sqft_living* 0.092903)) +
+  geom_histogram(binwidth= 40, fill = 'orange', color = 'white') +
+  labs (x = 'Squared Meters', title = ' House size')
+ 
+(p1new + p2new)/p3
+```
+
+
+
+```{r}
+house_prices %>%
+  summarize(mean_price = mean(price*21), 
+          median_price = median(price*21),
+          sd_price = sd(price*21))
+
+```
+
+Tenemos valores que están muy a la derecha o muy a la izquierda. Esto se resuelve con el logaritmo
+
+```{r}
+house_prices %>%
+  summarize(mean_mts_living = mean(sqft_living*0.092903), 
+          median_mts_living = median(sqft_living*0.092903),
+          sd_price_mts_living = sd(sqft_living*0.092903))
+
+```
+
+
+```{r}
+house_prices_new <- house_prices %>%
+  mutate(log10_price = log10(price*21),
+         log10_size = log10(sqft_living*0.092903))
+```
+
+```{r}
+house_prices_new %>% select(log10_price, log10_size)
+```
+
+
+Una vez que hacemos la transformación logarítmica se ve mas como campana de gauss
+
+```{r}
+p_before <- ggplot(house_prices, aes(x = price*21)) +
+  geom_histogram(binwidth = 4000000, fill = 'black', color = 'white') +
+  labs (x = 'price(MXN)', title = ' House price: Before')
+
+p_after <- ggplot(house_prices_new, aes(x = log10_price)) +
+  geom_histogram(bins=40, fill = 'black', color = 'white') +
+  labs (x = 'price(MXN)', title = ' House price: After')
+
+p_before + p_after
+```
+
+
+```{r}
+p_before_mts <- ggplot(house_prices, aes(x = sqft_living*0.092903)) +
+  geom_histogram(bins=50, fill = 'blue', color = 'white') +
+  labs (x = 'Size', title = ' House living: Before')
+
+p_after_mts <- ggplot(house_prices_new, aes(x = log10_size)) +
+  geom_histogram(bins=40, fill = 'brown', color = 'white') +
+  labs (x = 'Size', title = ' House living: After')
+
+p_before_mts + p_after_mts
+```
+
+
+```{r}
+(p_after + p_after_mts)/p3
+```
+
+
+#Modeling
+```{r}
+ggplot(house_prices_new, aes(x=log10_size, y=log10_price, color=condition)) + geom_point(alpha=0.5, size=0.5)+
+  labs(title="House Prices in Seattle", x="Size", y="Price")
+```
+
+
+```{r}
+ggplot(house_prices_new, aes(x=log10_size, y=log10_price, color=condition)) + geom_point(alpha=0.5, size=0.5)+
+  labs(title="House Prices in Seattle", x="Size", y="Price")+
+  facet_wrap(~condition)+
+  geom_smooth(method="lm")
+```
+
+Fit - Regression model
+
+```{r}
+price_prediction <- lm(log10_price ~ log10_size * condition, data = house_prices_new)
+parameters <- get_regression_table(price_prediction)
+parameters
+
+params <- parameters$estimate
+prediction <- function(params, size, indx) {
+output <- if(indx == 1) params[1] + params[2] *log10(size) else (params[1] + params[1+indx]) +  (params[2] + params[5+indx]) *log10(size)
+return(10^(output)) # going back to MXN
+}
+prediction(params, 170, 5)
+```
+
+

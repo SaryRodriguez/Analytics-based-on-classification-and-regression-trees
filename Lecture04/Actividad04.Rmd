@@ -1,0 +1,100 @@
+---
+title: "Actividad04"
+author: "Sara Rodriguez"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(patchwork)
+library(nycflights13)
+library(dplyr)
+#detach(package:plyr)
+```
+
+
+##Which airline has more delays
+
+```{r, message=FALSE, warning=FALSE}
+# flights_by_carrier <- group_by(flights, carrier)
+flights %>% 
+  group_by(carrier) %>% 
+  summarise(mean_delay = mean(dep_delay, na.rm = TRUE)) %>%
+  arrange(mean_delay) %>%
+  mutate(carrier = factor(carrier, levels = carrier, ordered = TRUE)) %>%
+  ggplot(aes(carrier, mean_delay)) +
+  geom_bar(stat = 'identity', fill="orange")
+
+```
+
+Looking at the variation in data
+
+```{r, message=FALSE, warning=FALSE}
+flights %>%
+  ggplot(aes(dep_delay, color = carrier)) + geom_freqpoly()
+```
+
+Using median instead of the mean since there are a lot of outliers
+
+```{r, message=FALSE, warning=FALSE}
+
+flights %>% 
+  group_by(carrier) %>% 
+  summarise(median_delay = median(dep_delay, na.rm = TRUE)) %>%
+  arrange(median_delay) %>%
+  mutate(carrier = factor(carrier, levels = carrier, ordered = TRUE)) %>%
+  ggplot(aes(carrier, median_delay)) +
+  geom_bar(stat = 'identity', fill="orange")
+
+```
+
+##Which airports has more delays
+
+```{r, message=FALSE, warning=FALSE}
+#scaling the data
+flights %>%
+  ggplot(aes(origin, dep_delay, fill=carrier)) + 
+  geom_boxplot() + 
+  ylim(0, 70)
+
+```
+
+##Departure time affects flight days
+
+```{r, message=FALSE, warning=FALSE}
+flights %>%
+  ggplot(aes(sched_dep_time, dep_delay, color=carrier))+
+  geom_point()
+```
+##How many flights leave each airport by carrier
+
+```{r, message=FALSE, warning=FALSE}
+flights %>%
+  ggplot(aes(origin, carrier)) +
+  geom_count()
+```
+
+##flights per day
+
+```{r}
+library(data.table)
+f <- data.table(nycflights13::flights)
+f[,weekday:=format.Date(time_hour,"%A")]
+ggplot(f, aes(weekday, col=carrier)) + geom_bar()
+```
+
+
+##Top destination points from each airport
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(f[dest%in%union(union(as.vector(f[origin=="EWR",.N,by=dest][order(-N)][1:3]$dest),
+                                   as.vector(f[origin=="LGA",.N,by=dest][order(-N)][1:3]$dest)),
+                             as.vector(f[origin=="JFK",.N,by=dest][order(-N)][1:3]$dest))], 
+       aes(dest, fill = carrier)) + geom_bar() +facet_grid(.~origin)
+```
+
