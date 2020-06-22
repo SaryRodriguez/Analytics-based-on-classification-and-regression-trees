@@ -1,0 +1,109 @@
+---
+title: "Actividad03"
+author: "Sara Rodriguez"
+date: "6/22/2020"
+output: html_document
+---
+
+### Now, use all these examples from *Lecture03* to explore the nycflights data set. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, message=FALSE, warrning=FALSE}
+library(nycflights13)
+library(tidyverse)
+library(patchwork)
+head(flights)
+```
+
+```{r, message=FALSE, warrning=FALSE}
+airlines_data <- airlines
+airports_data <- airports
+flights_data <- flights
+planes_data <- planes
+weather_data <- weather
+# Variables in flights dataset
+?flights
+```
+
+Grafica!! 
+
+```{r, message=FALSE, warrning=FALSE}
+ggplot(weather_data, aes(x = temp)) +
+  geom_histogram(binwidth = 3, color = "grey", fill = "red", alpha= 0.5) + 
+  labs(x = "Temperature (degrees F)", y = "Count", 
+       title = "New York City Airport Temperatures 2013")
+```
+
+
+```{r, message=FALSE, warrning=FALSE}
+g <- ggplot(planes_data, aes(seats)) + scale_fill_brewer(palette = "Spectral")
+g + geom_histogram(aes(fill=engine), #engines, engine
+                   col="black", 
+                   size=.1) +  # change binwidth
+  labs(title="Histogram", 
+       subtitle="Engine Displacement across Vehicle Classes") 
+```
+
+
+```{r, message=FALSE, warrning=FALSE}
+g + geom_histogram(aes(fill=engine), 
+                   bins=40, 
+                   col="black", size = 0.1) +   # change number of bins
+  labs(title="Histogram with Fixed Bins", 
+       subtitle="Engine Displacement across Vehicle Classes") 
+```
+
+
+
+### Histogram 
+```{r, message=FALSE, warning=FALSE}
+g <- ggplot(weather_data, aes(temp))
+g + geom_bar(aes(fill=origin), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.7)) + 
+  labs(title="Histogram on Categorical Variable", 
+       subtitle="Manufacturer across Vehicle Classes") 
+```
+
+
+
+### Density plot
+```{r}
+g <- ggplot(weather_data, aes(temp))
+g + geom_density(aes(fill=factor(origin)), alpha=0.5) + 
+    labs(title="Density plot", 
+         subtitle="City Mileage Grouped by Number of cylinders",
+         caption="Source: mpg",
+         x="City Mileage",
+         fill="# Cylinders")
+```
+
+#boxplots
+
+```{r}
+g <- ggplot(weather_data, aes(origin, humid))
+g + geom_boxplot(varwidth=T, fill="pink", alpha = 0.78) + 
+    labs(title="Box plot", 
+         subtitle="City Mileage grouped by Class of vehicle",
+         caption="Source: mpg",
+         x="Class of Vehicle",
+         y="City Mileage")
+```
+
+
+### Violin plot 
+```{r}
+g <- ggplot(weather_data, aes(origin, temp))
+g + geom_violin() + 
+  labs(title="Violin plot", 
+       subtitle="City Mileage vs Class of vehicle",
+       caption="Source: mpg",
+       x="Class of Vehicle",
+       y="City Mileage")
+```
+
+
+
