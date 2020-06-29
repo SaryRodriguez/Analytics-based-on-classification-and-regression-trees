@@ -1,0 +1,161 @@
+---
+title: "Classification"
+author: "Sara Rodriguez"
+date: "6/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dslabs)
+#install.packages("dslabs")
+# https://bradleyboehmke.github.io/HOML/kmeans.html
+mnist <- dslabs::read_mnist()
+
+```
+
+
+```{r}
+features <- mnist$train$images
+```
+
+but I want to see pictures, how?
+```{r}
+str(features[1,])
+d <- matrix(features[1,], nrow=28, byrow=TRUE)
+```
+
+```{r}
+library(reshape2)
+digito <- melt(d)
+digito
+```
+
+
+```{r}
+ggplot(digito, aes(x = Var2, y = Var1)) +
+  geom_raster(aes(fill=value))
+```
+
+
+```{r}
+library(patchwork)
+p <- function(i){
+    d <- matrix(features[i,], nrow = 28, byrow = TRUE)
+    digito<-melt(d)
+    ggplot(digito, aes(x = Var2, y = Var1)) +
+    geom_raster(aes(fill=value)) +  coord_fixed() +
+      theme_void() + theme(legend.position = "none")+
+      scale_y_reverse()
+  }
+```
+
+```{r}
+p(1) + p(2) + p(3) + p(4) + p(5) + p(6)
+```
+
+
+Actividad: Hacer un análisis estadístico de la distribucion de pixeles para cada tipo de digito
+
+cada feature es una imagen
+
+```{r}
+#con esta funcion puedo obtener todos los valores de grises par el cero.
+labels_dig <- mnist$train$labels
+
+
+#este es nada más para el cero
+#el cero está en el 2 
+x <- features[2,] %>% as.data.frame()
+for(i in 3:6000) {
+  if(labels_dig[i] == 0){
+    x <- rbind(x, features[i,] %>% as.data.frame())
+  }
+}
+
+ggplot(x, aes(x=.)) + geom_histogram(binwidth=1)
+
+```
+
+```{r}
+#este es nada más para el cinco
+#el cero está en el 1 
+x <- features[1,] %>% as.data.frame()
+for(i in 2:6000) {
+  if(labels_dig[i] == 5){
+    x <- rbind(x, features[i,] %>% as.data.frame())
+  }
+}
+
+ggplot(x, aes(x=.)) + geom_histogram(binwidth=10)
+```
+
+
+```{r}
+mnist_clustering <- kmeans(features, centers=10, nstart=10)
+```
+
+
+
+```{r}
+str(mnist_clustering)
+```
+
+
+```{r}
+#extract cluster centers
+mnist_centers <- mnist_clustering$centers
+glimpse(mnist_centers)
+```
+
+
+```{r}
+#plot centers
+par(mfrow=c(2,5), mar=c(0.5, 0.5, 0.5, 0.5))
+layout(matrix(seq_len(nrow(mnist_centers)),2,5,byrow=FALSE))
+for(i in seq_len(nrow(mnist_centers))){
+  image(matrix(mnist_centers[i,],28,28)[,28:1], xaxt="n", yaxt="n")
+}
+```
+
+TAREA: hacerlo para cada uno de los centros
+```{r}
+
+dc <- matrix(mnist_centers[1,], nrow=28, byrow=TRUE)
+digitoc <- melt(dc)
+p <- ggplot(digitoc, aes(x=Var2, y=Var1)) +
+  geom_raster(aes(fill=value)) + coord_fixed() + scale_y_reverse() +
+  theme_void() + theme(legend.position="none")
+p
+
+
+```
+
+```{r}
+# Create mode function
+mode_fun <- function(x){  
+  which.max(tabulate(x))
+}
+
+ 
+
+mnist_comparison <- data.frame(
+  cluster = mnist_clustering$cluster,
+  actual = mnist$train$labels
+) %>%
+  group_by(cluster) %>%
+  mutate(mode = mode_fun(actual)) %>%
+  ungroup() %>%
+  mutate_all(factor, levels = 0:9)
+
+ 
+
+# Create confusion matrix and plot results
+yardstick::conf_mat(
+  mnist_comparison, 
+  truth = actual, 
+  estimate = mode
+) %>%
+  autoplot(type = 'heatmap')
+```
+

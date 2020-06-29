@@ -1,0 +1,109 @@
+---
+title: "Kmeans_iris"
+author: "Sara Rodriguez"
+date: "6/27/2020"
+output: html_document
+---
+
+```{r}
+library(datasets)
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r}
+target<- iris[,"Species"]
+iris2<- as.data.frame(dplyr::select(iris ,-c("Species")))
+
+```
+
+## Visualizando los datos - Sepal
+
+```{r}
+
+ggplot(iris,aes(x = Sepal.Length, y = Sepal.Width, col= Species)) + geom_point()+
+  ggtitle("Sepal distritubtion")
+```
+
+## Visualizando los datos - Petal
+
+```{r}
+
+ggplot(iris,aes(x = Petal.Length, y = Petal.Width, col= Species)) + geom_point() +
+  ggtitle("Petal distritubtion")
+```
+
+## Normalizando los datos
+
+```{r}
+normalize <- function(x){
+  return ((x-min(x))/(max(x)-min(x)))
+}
+
+iris2 <- as.data.frame(sapply(iris2, normalize ))
+```
+
+
+## Clustering
+
+¿Cuántos son los clusters óptimos? - Elbow plot
+Parece que son 3 clusters
+
+```{r}
+set.seed(123)
+k.max <- 10
+#petal
+wss<- sapply(1:k.max,function(k){kmeans(iris[,3:4],k,nstart = 20,iter.max = 20)$tot.withinss})
+
+plot(1:k.max,wss, type= "b", xlab = "# Clusters", ylab = "Sum of squares within cluster")
+```
+
+### Clustering 2 variables - Petal
+
+
+```{r}
+set.seed(20)
+k2 <- kmeans(iris[,c(3:4)], centers=3)
+iris$k2 <- as.factor(k2$cluster)
+centers <- k2$centers
+cl <- k2$cluster
+```
+
+Confusion matrix
+
+```{r}
+table(cl, target)
+
+```
+
+De la tabla podemos ver que la mayoría de las observaciones se han agrupado correctamente, sin embargo, 2 de versicolor se han colocado incorrectamente en otro cluster y 4 de virginica se han colocado también incorrectamente
+
+Indica que mientras más se agregan variables, el clustering comienza a diverger. 
+
+### Clustering 4 variables 
+
+
+```{r}
+set.seed(20)
+k4 <- kmeans(iris2, centers=3)
+iris$k1 <- as.factor(k4$cluster)
+centers <- k4$centers
+cl <- k4$cluster
+```
+
+Confusion matrix
+
+```{r}
+table(cl, target)
+```
+
+De la tabla podemos ver que la mayoría de las observaciones se han agrupado correctamente, sin embargo, 3 de versicolor se han colocado incorrectamente en otro cluster y 14 de virginica se han colocado también incorrectamente
+
+
+```{r}
+ggplot()+
+  geom_point(iris2, mapping= aes(x=Petal.Length, y=Petal.Width, color=factor(cl), alpha=0.8) )+
+  geom_point(iris2, mapping= aes(x=Petal.Length, y=Petal.Width, color=factor(target), alpha=0.5))
+```
+
